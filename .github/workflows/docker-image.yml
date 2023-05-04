@@ -19,7 +19,7 @@ jobs:
       # 打包镜像推送到docker
       - name: Build and Push the Docker image
         run: |
-          docker login --username=${{ secrets.ALI_DK_PW }} --password=${{ secrets.ALI_DK_UNAME }}
+          docker login --username=${{ secrets.DK_UNAME }} --password=${{ secrets.DK_PW }}
           docker build -t sqli-detector-java:latest .
           docker push sqli-detector-java:latest
     # 使用appleboy/ssh-action@master登录服务器执行拉取镜像脚本
@@ -35,7 +35,7 @@ jobs:
           password: ${{ secrets.TXC_SSH_PASSWORD }}
           script: |
             echo -e "---------docker login--------"
-            sudo docker login --username=${{ secrets.ALI_DK_PW }} --password=${{ secrets.ALI_DK_UNAME }}
+            sudo docker login --username=${{ secrets.DK_UNAME }} --password=${{ secrets.DK_PW }}
             echo -e "---------docker Stop--------"
             sudo docker stop sqli-detector-java
             echo -e "---------docker Rm--------"
