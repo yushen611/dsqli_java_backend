@@ -1,0 +1,48 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag my-image-name:latest
+      # 打包镜像推送到docker
+      - name: Build and Push the Docker image
+        run: |
+          docker login --username=${{ secrets.ALI_DK_PW }} --password=${{ secrets.ALI_DK_UNAME }}
+          docker build -t sqli-detector-java:latest .
+          docker push sqli-detector-java:latest
+    # 使用appleboy/ssh-action@master登录服务器执行拉取镜像脚本
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.TXC_IP }}
+          username: root
+          password: ${{ secrets.TXC_SSH_PASSWORD }}
+          script: |
+            echo -e "---------docker login--------"
+            sudo docker login --username=${{ secrets.ALI_DK_PW }} --password=${{ secrets.ALI_DK_UNAME }}
+            echo -e "---------docker Stop--------"
+            sudo docker stop sqli-detector-java
+            echo -e "---------docker Rm--------"
+            sudo docker rm sqli-detector-java
+            sudo docker rmi sqli-detector-java:latest
+            echo -e "---------docker Pull--------"
+            sudo docker pull sqli-detector-java:latest
+            echo -e "---------docker Create and Start--------"
+            sudo docker run -p 8000:8000 --name sqli-detector-java sqli-detector-java:latest
+            echo -e "---------deploy Success--------"
